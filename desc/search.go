@@ -2,7 +2,7 @@ package main
 
 import (
 	// "bufio"
-	"fmt"
+	// "fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,9 +10,9 @@ import (
 	// "io/ioutil"
 
 	"github.com/everfore/exc/walkexc"
-	"github.com/tgrpc/desc"
+	// "github.com/tgrpc/desc"
 	// "github.com/toukii/goutils"
-	"log"
+	"git.ezbuy.me/ezbuy/base/misc/log"
 )
 
 type PBGo struct {
@@ -59,7 +59,7 @@ func init() {
 
 func main() {
 	walkexc.Setting(Cond, "")
-	filepath.Walk("/Users/toukii/PATH/GOPATH/ezbuy/goflow/src/git.ezbuy.me/ezbuy/base", walkexc.WalkExc)
+	filepath.Walk("$GOPATH/ezbuy/goflow/src/git.ezbuy.me/ezbuy/base", walkexc.WalkExc)
 	log.JSON(associPB)
 }
 
@@ -70,8 +70,8 @@ func Cond(dir string, info os.FileInfo) (ifExec bool, skip error) {
 	}
 	// fileSuffix := path.Ext(info.Name())
 	if !info.IsDir() {
-		predir := path.Base(strings.TrimRight(dir, info.Name()))
-		fmt.Printf("%s : %s/%s \n", dir, predir, info.Name())
+		// predir := path.Base(strings.TrimRight(dir, info.Name()))
+		// fmt.Printf("%s : %s/%s \n", dir, predir, info.Name())
 
 		pg := NewPBGo(dir, info.Name())
 		AddPBGo(pg)

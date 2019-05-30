@@ -11,11 +11,28 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	lock sync.Mutex
+	log  *logrus.Entry
 )
+
+func init() {
+	SetLog("debug")
+}
+
+func SetLog(logLevel string) {
+	lvl, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logrus.Error(err)
+		lvl = logrus.DebugLevel
+	}
+	logger := logrus.New()
+	logger.SetLevel(lvl)
+	log = logrus.NewEntry(logger)
+}
 
 // protoPath 与 incImp 不能有重叠部分 incImp例子：服务目录/服务proto文件
 func GenDescriptorSet(protoPath, descSetOut, incImp string) error {
@@ -274,4 +291,8 @@ func findServiceDescriptorProto(path string, fileDescriptorProto *descriptor.Fil
 		}
 	}
 	return foundServiceDescriptorProto, nil
+}
+
+func isErr(err error) bool {
+	return err != nil
 }
