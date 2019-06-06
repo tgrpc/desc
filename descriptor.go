@@ -65,7 +65,7 @@ func GenDescriptorSet(protoPath, descSetOut, incImp string) error {
 
 // method: pkg.Service incImp:pkg.service.proto
 func GetDescriptor(protoBasePath, method, incImp string, reuseDesc bool, rawDescs []string) (*descriptor.FileDescriptorSet, error) {
-	serviceName, err := getServiceName(method)
+	serviceName, err := GetServiceName(method)
 	if isErr(err) {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func getServiceProto(protoFile string) string {
 }
 
 // helloworld.Greeter
-func getServiceName(method string) (string, error) {
+func GetServiceName(method string) (string, error) {
 	spl := strings.Split(method, "/")
 	size := len(spl)
 	if size < 2 {
@@ -121,7 +121,7 @@ func getServiceName(method string) (string, error) {
 }
 
 // exp: helloworld.Greeter/SayHello
-func getMethod(method string) (string, error) {
+func GetMethod(method string) (string, error) {
 	split := strings.Split(method, "/")
 	if len(split) < 2 {
 		return "", fmt.Errorf("invalid gRPC method: %s", method)
@@ -215,7 +215,7 @@ func DecodeFileDescriptorSetByRaw(descSetOut string, raws []string) (*descriptor
 }
 
 func DecodeFileDescriptorSet(method string, fileDescriptorSet *descriptor.FileDescriptorSet) (*descriptor.FileDescriptorSet, error) {
-	serviceName, err := getServiceName(method)
+	serviceName, err := GetServiceName(method)
 	if err != nil {
 		return nil, err
 	}
