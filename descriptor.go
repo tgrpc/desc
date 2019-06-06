@@ -114,6 +114,16 @@ func getServiceProto(protoFile string) string {
 }
 
 // helloworld.Greeter
+func GetPackageName(method string) (string, error) {
+	spl := strings.Split(method, ".")
+	size := len(spl)
+	if size < 2 {
+		return "", fmt.Errorf("invalid gRPC method: %s", method)
+	}
+	return spl[0], nil
+}
+
+// helloworld.Greeter
 func GetServiceName(method string) (string, error) {
 	spl := strings.Split(method, "/")
 	size := len(spl)

@@ -19,8 +19,9 @@ func NewProtoDesc(fileDescriptorSet *descriptor.FileDescriptorSet, pbDirs ...str
 		fileDescriptorSet: fileDescriptorSet,
 	}
 
-	for _, dir := range pbDirs {
-		Collect(dir)
+	Collect(pbDirs...)
+	for key, it := range associPB {
+		fmt.Println(key, it)
 	}
 
 	return pdesc
@@ -62,6 +63,8 @@ func (p *ProtoDesc) searchDescSrc() (grpcurl.DescriptorSource, error) {
 }
 
 func SearchDescSrcByRawDescs(method string, rawDescs []string, pbDirs ...string) (grpcurl.DescriptorSource, error) {
+	source, err := Try(method, pbDirs...)
+	return source, err
 	fileDescriptorSet, err := DecodeFileDescriptorSetByRaw("", rawDescs)
 	if err != nil {
 		return nil, err
@@ -73,6 +76,40 @@ func SearchDescSrcByRawDescs(method string, rawDescs []string, pbDirs ...string)
 	pdesc := NewProtoDesc(fileDescriptorSet, pbDirs...)
 
 	return pdesc.searchDescSrc()
+}
+
+func Try(method string, pbDirs ...string) (grpcurl.DescriptorSource, error) {
+	Collect(pbDirs...)
+	serviceName, err := GetServiceName(method)
+	if err != nil {
+		return nil, err
+	}
+	importName := strings.ToLower(strings.Replace(serviceName, ".", "/", -1))
+	apb := SearchByImportName(importName)
+	if len(apb.PBs) <= 0 {
+		return nil, fmt.Errorf("pkg not found")
+	}
+	fmt.Println("SearchByImportName:", apb)
+	for _, it := range apb.PBs {
+		pbdesc := getDescriptorBytes(goutils.ReadFile(it.AbsDir))
+		fmt.Println("pbdesc:", pbdesc)
+		fileDescriptor, err := decodeDescByRaw(pbdesc)
+		if err != nil {
+			log.Errorf("%s err:%+v", it.ImportName(), err)
+			continue
+		}
+		set := &descriptor.FileDescriptorSet{
+			File: []*descriptor.FileDescriptorProto{fileDescriptor},
+		}
+		pb := NewProtoDesc(set, pbDirs...)
+		source, err := pb.searchDescSrc()
+		if err != nil {
+			log.Errorf("searchDescSrc %s err:%+v", it.ImportName(), err)
+			continue
+		}
+		return source, nil
+	}
+	return nil, fmt.Errorf("not found!")
 }
 
 func parse2PBFile(protofile string) string {
@@ -91,7 +128,7 @@ func needProtoFile(err string) string {
 
 func getDescriptorBytes(bs []byte) string {
 	cotxt := goutils.ToString(bs)
-	pa := regexp.MustCompile(fmt.Sprintf(`(?s)bytes of a gzipped FileDescriptorProto\n((.*)),\n}`))
+	pa := regexp.MustCompile(fmt.Sprintf(`(?s)bytes of a gzipped FileDescriptorProto\n((.*?)),\n}`))
 	ma := pa.FindStringSubmatch(cotxt)
 	size := len(ma)
 	if size > 0 {
