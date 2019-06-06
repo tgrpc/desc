@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/sirupsen/logrus"
+	"github.com/tgrpc/grpcurl"
 )
 
 var (
@@ -61,6 +62,20 @@ func GenDescriptorSet(protoPath, descSetOut, incImp string) error {
 		log.WithField("protoc", string(bs)).Error(err)
 	}
 	return err
+}
+
+func GetDescriptorSource(protoBasePath, method, incImp string, reuseDesc bool, rawDescs []string) (grpcurl.DescriptorSource, error) {
+	fileDescriptorSet, err := GetDescriptor(protoBasePath, method, incImp, reuseDesc, rawDescs)
+	if isErr(err) {
+		return nil, err
+	}
+
+	fileDescriptorSet, err = DecodeFileDescriptorSet(method, fileDescriptorSet)
+	if isErr(err) {
+		return nil, err
+	}
+
+	return grpcurl.DescriptorSourceFromFileDescriptorSet(fileDescriptorSet)
 }
 
 // method: pkg.Service incImp:pkg.service.proto
