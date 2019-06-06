@@ -91,7 +91,7 @@ func needProtoFile(err string) string {
 
 func getDescriptorBytes(bs []byte) string {
 	cotxt := goutils.ToString(bs)
-	pa := regexp.MustCompile(fmt.Sprintf(`(?s)bytes of a gzipped FileDescriptorProto\n((.*)),\n}`))
+	pa := regexp.MustCompile(fmt.Sprintf(`(?s)bytes of a gzipped FileDescriptorProto\n((.*?)),\n}`))
 	ma := pa.FindStringSubmatch(cotxt)
 	size := len(ma)
 	if size > 0 {
