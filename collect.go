@@ -1,6 +1,7 @@
 package desc
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -39,6 +40,33 @@ var (
 
 func init() {
 	associPB = make(map[string]*AssociPB, 100)
+}
+
+func SearchByImportName(importName string) *AssociPB {
+	apb := &AssociPB{
+		PBs: make([]*PBGo, 0, 1),
+	}
+	for name, it := range associPB {
+		fmt.Println(name, importName)
+		if strings.HasPrefix(name, importName) {
+			apb.PBs = append(apb.PBs, it.PBs...)
+		}
+	}
+	return apb
+}
+
+func SearchByPkgName(packageName, serviceName string) *AssociPB {
+	apb := &AssociPB{
+		PBs: make([]*PBGo, 0, 1),
+	}
+	for _, it := range associPB {
+		for _, pb := range it.PBs {
+			if pb.ParientName == packageName {
+				apb.PBs = append(apb.PBs, pb)
+			}
+		}
+	}
+	return apb
 }
 
 func Search(importName string) *AssociPB {

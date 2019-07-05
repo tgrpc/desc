@@ -3,9 +3,7 @@ package desc
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -37,21 +35,11 @@ func SetLog(logLevel string) {
 
 // protoPath 与 incImp 不能有重叠部分 incImp例子：服务目录/服务proto文件
 func GenDescriptorSet(protoPath, descSetOut, incImp string) error {
-	if protoPath[0] != "/"[0] {
-		var prefix string
-		if protoPath[0] == "$"[0] {
-			spl := strings.SplitN(protoPath, "/", 2)
-			prefix = os.Getenv(spl[0][1:])
-			protoPath = spl[1]
-		} else {
-			var err error
-			prefix, err = os.Getwd()
-			if isErr(err) {
-				return err
-			}
-		}
-		protoPath = filepath.Join(prefix, protoPath)
+	protoPath, err := absDir(protoPath)
+	if err != nil {
+		return err
 	}
+
 	incImp = getServiceProto(incImp)
 	args := []string{fmt.Sprintf("--proto_path=%s", protoPath), fmt.Sprintf("--descriptor_set_out=%s", descSetOut), "--include_imports", fmt.Sprintf("%s", incImp)}
 
@@ -123,6 +111,16 @@ func getServiceProto(protoFile string) string {
 		return protoFile
 	}
 	return strings.Join(spl[size-2:], "/")
+}
+
+// helloworld.Greeter
+func GetPackageName(method string) (string, error) {
+	spl := strings.Split(method, ".")
+	size := len(spl)
+	if size < 2 {
+		return "", fmt.Errorf("invalid gRPC method: %s", method)
+	}
+	return spl[0], nil
 }
 
 // helloworld.Greeter
