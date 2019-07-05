@@ -58,18 +58,24 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 		if pbgo == nil {
 			panic(fmt.Sprintf("cannot find %s", pbgoFile))
 		}
-		if len(pbgo.PBs) > 1 {
-			pmsg := fmt.Sprintf("ambiguous %s files: ", pbgo.PBs[0].ImportName())
-			for _, it := range pbgo.PBs {
-				pmsg = pmsg + "\n " + it.AbsDir
+		var pbdesc string
+		find := false
+		var pbdescfile *descriptor.FileDescriptorProto
+		for _, pb := range pbgo.PBs {
+			log.Debugf("search %s ==> %s", protoFile, pb.AbsDir)
+			pbdesc = getDescriptorBytes(goutils.ReadFile(pb.AbsDir))
+			var err error
+			pbdescfile, err = decodeDescByRaw(pbdesc)
+			if err != nil {
+				log.Errorf("err:%+v", err)
+				continue
+			} else {
+				find = true
+				break
 			}
-			panic(pmsg)
 		}
-		log.Debugf("search %s ==> %s", protoFile, pbgo.PBs[0].AbsDir)
-		pbdesc := getDescriptorBytes(goutils.ReadFile(pbgo.PBs[0].AbsDir))
-		pbdescfile, err := decodeDescByRaw(pbdesc)
-		if err != nil {
-			return source, err
+		if !find {
+			panic(fmt.Sprintf("not found pb for:%s", pbgoFile))
 		}
 		p.rawPbDescs = append(p.rawPbDescs, pbdesc)
 		p.fileDescriptorSet.File = append(p.fileDescriptorSet.File, pbdescfile)
