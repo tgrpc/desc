@@ -84,10 +84,11 @@ func SearchDescSrcByRawDescs(method string, rawDescs []string, pbDirs ...string)
 		fileDescriptorSet, err = DecodeFileDescriptorSetByRaw("", rawDescs)
 		if err != nil {
 			log.Errorf("DecodeFileDescriptorSetByRaw, err:%+v", err)
-		}
-		fileDescriptorSet, err = DecodeFileDescriptorSet(method, fileDescriptorSet)
-		if err != nil {
-			log.Errorf("DecodeFileDescriptorSet, err:%+v", err)
+		} else {
+			fileDescriptorSet, err = DecodeFileDescriptorSet(method, fileDescriptorSet)
+			if err != nil {
+				log.Errorf("DecodeFileDescriptorSet, err:%+v", err)
+			}
 		}
 	}
 
