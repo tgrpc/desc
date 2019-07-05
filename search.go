@@ -75,7 +75,7 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 			}
 		}
 		if !find {
-			panic(fmt.Sprintf("not found pb for:%s", pbgoFile))
+			panic(fmt.Sprintf("not found pb for:%s", method))
 		}
 		p.rawPbDescs = append(p.rawPbDescs, pbdesc)
 		p.fileDescriptorSet.File = append(p.fileDescriptorSet.File, pbdescfile)
