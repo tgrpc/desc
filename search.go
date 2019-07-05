@@ -113,9 +113,9 @@ func SearchDescSrcByRawDescs(method string, rawDescs []string, pbDirs ...string)
 		if i > 0 {
 			wr.Write([]byte(`, `))
 		}
-		wr.Write([]byte(`"`))
+		wr.Write([]byte(`'`))
 		wr.Write(goutils.ToByte(it))
-		wr.Write([]byte(`"`))
+		wr.Write([]byte(`'`))
 	}
 	goutils.WriteFile(fmt.Sprintf("%s.desc", serviceName), wr.Bytes())
 	return descsrc, err
