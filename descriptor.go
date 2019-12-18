@@ -77,7 +77,7 @@ func GetDescriptor(protoBasePath, method, incImp string, reuseDesc bool, rawDesc
 	var desc *descriptor.FileDescriptorSet
 
 	if len(rawDescs) > 0 {
-		desc, err := DecodeFileDescriptorSetByRaw(descSetOut, rawDescs)
+		desc, err := DecodeFileDescriptorSetByBase64Str(descSetOut, rawDescs)
 		if err == nil {
 			return desc, nil
 		}
@@ -213,12 +213,34 @@ func decodeDescByRaw(raw string) (*descriptor.FileDescriptorProto, error) {
 	return ExtractFile(data)
 }
 
+func decodeDescByBase64Str(raw string) (*descriptor.FileDescriptorProto, error) {
+	data, err := Base64Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	return ExtractFile(data)
+}
+
 func DecodeFileDescriptorSetByRaw(descSetOut string, raws []string) (*descriptor.FileDescriptorSet, error) {
 	log.Infof("decode desc frow raw...")
 	descSet := new(descriptor.FileDescriptorSet)
 	descSet.File = make([]*descriptor.FileDescriptorProto, 0, len(raws))
 	for _, raw := range raws {
 		descProto, err := decodeDescByRaw(raw)
+		if err != nil {
+			return nil, err
+		}
+		descSet.File = append(descSet.File, descProto)
+	}
+	return descSet, nil
+}
+
+func DecodeFileDescriptorSetByBase64Str(descSetOut string, raws []string) (*descriptor.FileDescriptorSet, error) {
+	log.Infof("decode desc frow raw...")
+	descSet := new(descriptor.FileDescriptorSet)
+	descSet.File = make([]*descriptor.FileDescriptorProto, 0, len(raws))
+	for _, raw := range raws {
+		descProto, err := decodeDescByBase64Str(raw)
 		if err != nil {
 			return nil, err
 		}

@@ -112,11 +112,16 @@ func SearchDescSrcByRawDescs(method string, rawDescs []string, pbDirs ...string)
 	for i, it := range pdesc.rawPbDescs {
 		if i > 0 {
 			wr.Write([]byte(`, `))
+		} else {
+			wr.Write([]byte(`[`))
 		}
+		base64bs := []byte(Base64Encode(ParseStr2Bytes(it)))
 		wr.Write([]byte(`'`))
-		wr.Write(goutils.ToByte(it))
+		wr.Write(base64bs)
 		wr.Write([]byte(`'`))
 	}
+	wr.Write([]byte(`]`))
+
 	goutils.WriteFile(fmt.Sprintf("%s.desc", serviceName), wr.Bytes())
 	return descsrc, err
 }

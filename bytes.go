@@ -3,6 +3,7 @@ package desc
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -10,6 +11,14 @@ import (
 	"github.com/golang/protobuf/proto"
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
+
+func Base64Encode(bs []byte) string {
+	return base64.StdEncoding.EncodeToString(bs)
+}
+
+func Base64Decode(str string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(str)
+}
 
 func ParseStr2Bytes(str string) []byte {
 	s := strings.Split(str, ",")
