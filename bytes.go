@@ -8,8 +8,10 @@ import (
 	"io/ioutil"
 	"strings"
 
+	gogoproto "github.com/gogo/protobuf/proto"
+	gogodescriptor "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/golang/protobuf/proto"
-	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 func Base64Encode(bs []byte) string {
@@ -51,7 +53,7 @@ func s2i(s byte) byte {
 }
 
 // extractFile extracts a FileDescriptorProto from a gzip'd buffer.
-func ExtractFile(gz []byte) (*protobuf.FileDescriptorProto, error) {
+func ExtractFile(gz []byte) (*descriptor.FileDescriptorProto, error) {
 	r, err := gzip.NewReader(bytes.NewReader(gz))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open gzip reader: %v", err)
@@ -64,8 +66,30 @@ func ExtractFile(gz []byte) (*protobuf.FileDescriptorProto, error) {
 	}
 
 	// fmt.Println(b)
-	fd := new(protobuf.FileDescriptorProto)
+	fd := new(descriptor.FileDescriptorProto)
 	if err := proto.Unmarshal(b, fd); err != nil {
+		return nil, fmt.Errorf("malformed FileDescriptorProto: %v", err)
+	}
+
+	return fd, nil
+}
+
+// extractFile extracts a FileDescriptorProto from a gzip'd buffer.
+func ExtractGoGoFile(gz []byte) (*gogodescriptor.FileDescriptorProto, error) {
+	r, err := gzip.NewReader(bytes.NewReader(gz))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open gzip reader: %v", err)
+	}
+	defer r.Close()
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to uncompress descriptor: %v", err)
+	}
+
+	// fmt.Println(b)
+	fd := new(gogodescriptor.FileDescriptorProto)
+	if err := gogoproto.Unmarshal(b, fd); err != nil {
 		return nil, fmt.Errorf("malformed FileDescriptorProto: %v", err)
 	}
 

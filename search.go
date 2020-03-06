@@ -51,6 +51,8 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 	serviceName, _ := GetServiceName(method)
 	log.Debugf("search %s, pkg: %s, service: %s", method, pkgName, serviceName)
 
+	target := method
+
 	for {
 		var err error
 		source, err = grpcurl.DescriptorSourceFromFileDescriptorSet(p.fileDescriptorSet)
@@ -63,13 +65,14 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 		var pbgo *AssociPB
 		if err == nil {
 			msg = fmt.Sprintf("no descriptor found for %s", method)
-			pbgo = SearchByPkgName(pkgName, serviceName)
+			pbgo = SearchByMethod(pkgName, serviceName, method, p.unique)
 		} else {
 			msg = err.Error()
 			protoFile = needProtoFile(msg)
-			pbgoFile = pkgName + "/" + parse2PBFile(protoFile)
+			target = protoFile
+			pbgoFile = parse2PBFile(protoFile)
 			log.Debugf("%s ==> %s %s", msg, protoFile, pbgoFile)
-			pbgo = Search(pbgoFile)
+			pbgo = SearchByImportFilename(pbgoFile)
 		}
 		if pbgo == nil {
 			panic(fmt.Sprintf("cannot find %s", pbgoFile))
@@ -81,14 +84,8 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 		for _, pb := range pbgo.PBs {
 			log.Debugf("searching %s", pb.ImportName())
 			pbfilebs := goutils.ReadFile(pb.AbsDir)
-			pbfilecnt := goutils.ToString(pbfilebs)
 
-			methodContains := strings.Contains(pbfilecnt, method)
-			if !methodContains && strings.Contains(pbfilecnt, "Methods: []grpc.MethodDesc") {
-				continue
-			}
-
-			log.Infof("%s --> %s", method, pb.AbsDir)
+			log.Infof("%s --> %s", target, pb.AbsDir)
 
 			pbdesc = getDescriptorBytes(pbfilebs)
 			var err error
@@ -102,7 +99,8 @@ func (p *ProtoDesc) searchDescSrc(method string) (grpcurl.DescriptorSource, erro
 			}
 		}
 		if !find {
-			panic(fmt.Sprintf("not found pb for:%s", method))
+			log.Warnf(fmt.Sprintf("not found pb for:%s", method))
+			break
 		}
 	}
 	return source, nil
@@ -158,7 +156,7 @@ func Try(method string, pbDirs ...string) (grpcurl.DescriptorSource, error) {
 		return nil, err
 	}
 	importName := strings.ToLower(strings.Replace(serviceName, ".", "/", -1))
-	apb := SearchByImportName(importName)
+	apb := SearchByFilename(importName)
 	if len(apb.PBs) <= 0 {
 		return nil, fmt.Errorf("pkg not found")
 	}

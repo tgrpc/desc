@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	// gogoproto "github.com/gogo/protobuf/proto"
+	gogodescriptor "github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/sirupsen/logrus"
@@ -44,6 +46,7 @@ func GenDescriptorSet(protoPath, descSetOut, incImp string) error {
 	args := []string{fmt.Sprintf("--proto_path=%s", protoPath), fmt.Sprintf("--descriptor_set_out=%s", descSetOut), "--include_imports", fmt.Sprintf("%s", incImp)}
 
 	lock.Lock()
+	log.Infof("%+v", args)
 	bs, err := exec.Command("protoc", args...).CombinedOutput()
 	lock.Unlock()
 	if len(bs) > 0 {
@@ -221,6 +224,14 @@ func decodeDescByBase64Str(raw string) (*descriptor.FileDescriptorProto, error) 
 	return ExtractFile(data)
 }
 
+func decodeGoGoDescByBase64Str(raw string) (*gogodescriptor.FileDescriptorProto, error) {
+	data, err := Base64Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	return ExtractGoGoFile(data)
+}
+
 func DecodeFileDescriptorSetByRaw(descSetOut string, raws []string) (*descriptor.FileDescriptorSet, error) {
 	log.Infof("decode desc frow raw...")
 	descSet := new(descriptor.FileDescriptorSet)
@@ -241,6 +252,20 @@ func DecodeFileDescriptorSetByBase64Str(descSetOut string, raws []string) (*desc
 	descSet.File = make([]*descriptor.FileDescriptorProto, 0, len(raws))
 	for _, raw := range raws {
 		descProto, err := decodeDescByBase64Str(raw)
+		if err != nil {
+			return nil, err
+		}
+		descSet.File = append(descSet.File, descProto)
+	}
+	return descSet, nil
+}
+
+func DecodeGoGoFileDescriptorSetByBase64Str(descSetOut string, raws []string) (*gogodescriptor.FileDescriptorSet, error) {
+	log.Infof("decode desc frow raw...")
+	descSet := new(gogodescriptor.FileDescriptorSet)
+	descSet.File = make([]*gogodescriptor.FileDescriptorProto, 0, len(raws))
+	for _, raw := range raws {
+		descProto, err := decodeGoGoDescByBase64Str(raw)
 		if err != nil {
 			return nil, err
 		}

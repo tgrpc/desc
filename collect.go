@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/everfore/exc/walkexc"
+	"github.com/toukii/goutils"
 )
 
 type PBGo struct {
@@ -42,35 +43,45 @@ func init() {
 	associPB = make(map[string]*AssociPB, 100)
 }
 
-func SearchByImportName(importName string) *AssociPB {
+func SearchByFilename(filename string) *AssociPB {
 	apb := &AssociPB{
 		PBs: make([]*PBGo, 0, 1),
 	}
 	for name, it := range associPB {
-		fmt.Println(name, importName)
-		if strings.HasPrefix(name, importName) {
+		fmt.Println(name, filename)
+		if strings.HasSuffix(name, filename) {
 			apb.PBs = append(apb.PBs, it.PBs...)
 		}
 	}
 	return apb
 }
 
-func SearchByPkgName(packageName, serviceName string) *AssociPB {
+func SearchByMethod(packageName, serviceName, method string, unique map[string]bool) *AssociPB {
 	apb := &AssociPB{
 		PBs: make([]*PBGo, 0, 1),
 	}
 	for _, it := range associPB {
 		for _, pb := range it.PBs {
+			if unique[pb.ImportName()] {
+				continue
+			}
 			if pb.ParientName == packageName {
-				apb.PBs = append(apb.PBs, pb)
+				pbfilebs := goutils.ReadFile(pb.AbsDir)
+				pbfilecnt := goutils.ToString(pbfilebs)
+				if strings.Contains(pbfilecnt, method) {
+					apb.PBs = append(apb.PBs, pb)
+				}
 			}
 		}
 	}
 	return apb
 }
 
-func Search(importName string) *AssociPB {
-	a, _ := associPB[importName]
+func SearchByImportFilename(importfilename string) *AssociPB {
+	a, _ := associPB[importfilename]
+	if a == nil {
+		return SearchByFilename(importfilename)
+	}
 	return a
 }
 
